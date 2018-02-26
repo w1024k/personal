@@ -31,5 +31,5 @@ handler.authorizer = authorizer
 server = FTPServer(
     (ip, 21), 
     handler)
-print 'ftp://192.168.3.95/'
+print 'ftp://%s/'%ip
 server.serve_forever()
