@@ -29,7 +29,7 @@ handler.authorizer = authorizer
 
 # 参数：IP，端口，handler
 server = FTPServer(
-    (ip, 21), 
+    (ip, 21),
     handler)
 print 'ftp://%s/'%ip
 server.serve_forever()

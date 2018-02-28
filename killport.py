@@ -1,5 +1,5 @@
 import os,sys,re
-''' 
+'''
 python /personal/killport.py 8001
 '''
 params = sys.argv
