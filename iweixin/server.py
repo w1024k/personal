@@ -4,7 +4,7 @@ from tornado.options import options, define
 from urls import urlpatterns
 import os
 
-define("port", default=8000, type=int, help='run server on this port')
+define("port", default=8888, type=int, help='run server on this port')
 
 
 class Application(web.Application):
