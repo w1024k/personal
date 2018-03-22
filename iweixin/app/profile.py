@@ -43,7 +43,6 @@ class Login(BaseHandler):
             f.write(qrcode)
 
     def loginCallback(self):
-        print 'webbrowser'
         import webbrowser
         webbrowser.open("http://127.0.0.1:8888/get/friends/")
 
