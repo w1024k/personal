@@ -36,12 +36,21 @@ def loginCallback():
 #     udpClient.sendto(data, settings.SOCK_ADDR)
 #     udpClient.close()
 
-def run():
-    pass
 
 
-def sync_task():
+def sync_task(run, **kwargs):
     while True:
         command = yield
-        threading.Thread(target=run).start()
+        threading.Thread(target=run, kwargs=kwargs).start()
         print '%s start' % command
+
+
+def send_friend_handler(self, times, msg, toUsername, split_time, wait_time):
+    sleep(wait_time)
+    for _ in range(times):
+        itchat.send(msg=msg, toUserName=toUsername)
+        sleep(split_time)
+
+
+def send_all_handler(username, msg):
+    itchat.send(toUserName=username, msg=msg)
