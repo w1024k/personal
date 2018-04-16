@@ -1,0 +1,3 @@
+<view class="page-header">
+  <input class='page-header-text' placeholder='输入搜索关键字' /><view class='search'>搜索</view>
+</view>
