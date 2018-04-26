@@ -13,11 +13,11 @@
         <button class='msgButton' data-id="{{ loop.index0 }}">发送消息</button>
     </p>
     <p>个性签名: {{ user.signature }}</p>
-    <p class="sendMsg" data-index="{{ loop.index0 }}">
-        <input type="text" name="wait_time{{ loop.index0 }}" value="0">多少分钟后发送<br>
-        <input type="text" name="times{{ loop.index0 }}" value="1">发送次数<br>
-        <input type="text" name="split_time{{ loop.index0 }}" value="0">每次发送间隔时间<br>
-        <input type="text" name="msg{{ loop.index0 }}" value="">内容 <br>
+    <p class="sendMsg">
+        <input type="text" class="wait_time" value="0">多少分钟后发送<br>
+        <input type="text" class="times" value="1">发送次数<br>
+        <input type="text" class="split_time" value="0">每次发送间隔时间<br>
+        <input type="text" class="msg" value="">内容 <br>
         <button data-name={{ user.UserName }} data-id={{ loop.index0 }} class='submitMsg'>提交</button>
     </p>
 </blockquote>
@@ -68,8 +68,11 @@
     each(submitMsg, function (index, submit) {
         submit.onclick = function () {
             var username = submit.getAttribute('data-name');
-            var id = submit.getAttribute('data-id');
-            var times = document.getElementsByName('')
+            var times = submit.parentNode.getElementsByClassName('times')[0].value
+            var wait_time = submit.parentNode.getElementsByClassName('wait_time')[0].value
+            var split_time = submit.parentNode.getElementsByClassName('split_time')[0].value
+            var msg = submit.parentNode.getElementsByClassName('msg')[0].value
+
         }
     })
 
