@@ -1,5 +1,9 @@
 # coding=utf-8
-from flask import Flask, request, Response
+import sys, os
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+from flask import Flask, request, Response, render_template
 import copy
 import threading
 import itchat
@@ -7,13 +11,15 @@ import ujson as json
 import settings
 import tools
 import gevent
+import matplotlib.pyplot as plt
+import StringIO
 
 app = Flask(__name__)
 
 
 @app.route('/')
 def test():
-    return 'hello world'
+    return render_template('friends.html')
 
 
 @app.route('/friends/')
@@ -26,18 +32,23 @@ def friend_list():
         rsp_data['data'] = e
         return Response(json.dumps(rsp_data), mimetype='application/json')
     records = list()
+
     for friend in friend_list:
         detail = {
             'nickname': friend['NickName'],
+            'RemarkName': friend['RemarkName'],
             'signature': friend['Signature'],
-            'sex': settings.SEX_CHOICES[friend['Sex']],
+            'sex': settings.SEX_CHOICES[int(friend['Sex'])],
+            'City': friend['City'],
+            'UserName': friend['UserName'],
         }
         records.append(detail)
     rsp_data['data'] = records
-    return Response(json.dumps(rsp_data), mimetype='application/json')
+    # return Response(json.dumps(rsp_data), mimetype='application/json')
+    return render_template('friends_list.html', rsp_data=rsp_data)
 
 
-@app.route('/profile/')
+@app.route('/chat/room/')
 def chat_room():
     rsp_data = copy.copy(settings.ERROR['SUCC'])
 
@@ -52,14 +63,15 @@ def chat_room():
         detail = {
             'nickname': room['NickName'],
             'memberCount': room['MemberCount'],
+            'UserName': room['UserName']
         }
         records.append(detail)
     rsp_data['data'] = records
-    return Response(json.dumps(rsp_data), mimetype='application/json')
+    return render_template('room_list.html', rsp_data=rsp_data)
 
 
 @app.route('/sex/count/')
-def sex_count(self):
+def sex_count():
     rsp_data = copy.copy(settings.ERROR['SUCC'])
     try:
         friend_list = itchat.get_friends(request.args.get('update', False))
@@ -69,34 +81,42 @@ def sex_count(self):
         return Response(json.dumps(rsp_data), mimetype='application/json')
     man = woman = other = 0
     for friend in friend_list:
-        if friend['sex'] == 1:
+        sex = int(friend['Sex'])
+        if sex == 1:
             man += 1
-        elif friend['sex'] == 0:
+        elif sex == 0:
             woman += 1
         else:
             other += 1
-    rsp_data['data'] = {
-        'man': man,
-        'woman': woman,
-        'other': other,
-    }
-    return Response(json.dumps(rsp_data), mimetype='application/json')
+
+    labels = [u'男', u'女', u'其他']
+    X = [man, woman, other]
+    plt.pie(X, labels=labels, autopct='%1.2f%%')
+    plt.title(u"好友性别分布")
+
+    s = StringIO.StringIO()
+    plt.savefig(s)
+    s.seek(0)
+    return Response(s.read(), mimetype="image/png")
 
 
 @app.route('/send/msg/')
 def send_friend(times=1, name='', msg='', wait_time=0, split_time=1):
     rsp_data = copy.copy(settings.ERROR['SUCC'])
-    times = request.form.get('times', 1)  # 发送次数
-    split_time = int(request.form.get('split_time', 1))  # 每次发送间隔时间
-    wait_time = request.form.get('wait_time', 0)  # 多少分钟后发送
-    name = request.form.get('name', '') and request.form[name].decode('utf-8')  # 昵称
+    times = int(request.values.get('times', 1))  # 发送次数
+    split_time = int(request.values.get('split_time', 1))  # 每次发送间隔时间
+    wait_time = int(request.values.get('wait_time', 0))  # 多少分钟后发送
+    name = request.values.get('name', '') and request.values[name].decode('utf-8')  # 昵称
+    msg = request.values.get('msg', '')
 
-    user = itchat.search_friends(name=name) or itchat.search_chatrooms(name=name)
-    if user:
-        username = user[0]['UserName']
-    else:
-        rsp_data = copy.copy(settings.ERROR['NOT_EXIST_USER'])
-        return Response(json.dumps(rsp_data), mimetype='application/json')
+    username = request.values.get('username', None)
+    if not username:
+        user = itchat.search_friends(name=name) or itchat.search_chatrooms(name=name)
+        if user:
+            username = user[0]['UserName']
+        else:
+            rsp_data = copy.copy(settings.ERROR['NOT_EXIST_USER'])
+            return Response(json.dumps(rsp_data), mimetype='application/json')
     params = {
         "times": times,
         "msg": msg,
@@ -105,14 +125,13 @@ def send_friend(times=1, name='', msg='', wait_time=0, split_time=1):
         "wait_time": wait_time
     }
 
-    tools.sync_task(tools.send_friend_handler, **params)
+    sync.send((tools.send_friend_handler, params))
     return Response(json.dumps(rsp_data), mimetype='application/json')
 
 
 @app.route('/send/msg/all/')
 def send_all():
-    rsp_data = copy.copy(settings.ERROR['SUCC'])
-    msg = request.form.get('msg', '')
+    msg = request.values.get('msg', '')
     try:
         friend_list = itchat.get_friends(request.args.get('update', False))
     except Exception as e:
@@ -126,6 +145,13 @@ def send_all():
 
 
 if __name__ == '__main__':
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    qr_png = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'QR.png')
+    itchat_pkl = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'QR.png')
+    if os.path.exists(qr_png):
+        os.remove(qr_png)
+    if os.path.exists(itchat_pkl):
+        os.remove(itchat_pkl)
     login_thread = threading.Thread(target=itchat.auto_login,
                                     kwargs=(dict(hotReload=True, loginCallback=tools.loginCallback)))
     login_thread.start()

@@ -1,12 +1,11 @@
 # coding:utf-8
 
 from time import ctime, sleep
-from socket import *
+# from socket import *
 import webbrowser
 import threading
-import settings
 import itchat
-import gevent
+import matplotlib.pyplot as plt
 
 
 def loginCallback():
@@ -38,19 +37,53 @@ def loginCallback():
 
 
 
-def sync_task(run, **kwargs):
+def sync_task():
+    i = 0
     while True:
-        command = yield
-        threading.Thread(target=run, kwargs=kwargs).start()
-        print '%s start' % command
+        run, params = yield
+        threading.Thread(target=run, kwargs=params).start()
+        print '%s start' % i
+        i += 1
 
 
-def send_friend_handler(self, times, msg, toUsername, split_time, wait_time):
+def send_friend_handler(times, msg, toUsername, split_time, wait_time):
     sleep(wait_time)
-    for _ in range(times):
+    for i in range(times):
         itchat.send(msg=msg, toUserName=toUsername)
+        print '%s sucess' % i
         sleep(split_time)
 
 
 def send_all_handler(username, msg):
     itchat.send(toUserName=username, msg=msg)
+#
+# def create_pie_image():
+#
+#     labels = ['China', 'Swiss', 'USA', 'UK', 'Laos', 'Spain']
+#     X = [222, 42, 455, 664, 454, 334]
+#     plt.pie(X, labels=labels, autopct='%1.2f%%')
+#     plt.title("Pie chart")
+
+    # plt.show()
+    # plt.savefig("PieChart.jpg")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
