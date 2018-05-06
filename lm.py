@@ -22,4 +22,39 @@ params = {
 }
 
 rsp = session.get(url=url, data=params, headers=headers)
-print rsp
+records = rsp.json()
+details = list()
+for record in records['list']:
+    detail = {
+        'name': record['chineseName'],
+        'company': record['company']['name'],
+        'job': record['current']['title'],
+        'city': record['city'] and record['city']['name'],
+        'salary': record['annualSalary'],
+        'age': record['dateOfBirth'],
+        'phone': record['mobile'],
+        'last_contact': record['lastUpdateDate'],
+
+        'gender': '男' if record['gender'] else '女',
+        'school': record['school'],
+        'email': record['email'],
+        'education': record['education']['value'],
+    }
+    # print detail
+    # details.append(detail)
+
+url = 'http://120.27.18.252:5678/rest/joborder/list?byfilter=-8888&ordering=-lastUpdateDate&page=1&paginate_by=1'
+
+jobs = session.get(url=url).json()
+
+for record in jobs['list']:
+    detail = {
+        'job_name': record["jobTitle"],
+        'company': record['client']['name'],
+        'city': record['city'] and record['city']['name'],
+        'waiter': [user["user"]["chineseName"] for user in record['users']],
+        'worker_count': record['currentCount'],
+        'lastupdate': record['lastUpdate'],
+    }
+    print detail
+
